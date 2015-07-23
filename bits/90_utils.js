@@ -127,6 +127,54 @@ function sheet_to_json(sheet, opts){
 	return out;
 }
 
+function json_to_sheet(json, opts){
+    var outerArr = [];
+    var header = Object.keys(json[0]);
+    outerArr.push(header);
+    // Refactor JSON object to a 2-dimensional array
+    for (var i = 0; i < json.length; i++){
+        var innerArr = [];
+        for (var j = 0; j < header.length; j++){
+            if (!!Number(json[i][header[j]])){
+                innerArr.push(Number(json[i][header[j]]));
+            }else{
+                innerArr.push(json[i][header[j]]);
+            }
+        }
+        outerArr.push(innerArr);
+    }
+    return array_to_sheet(outerArr);
+}
+
+function array_to_sheet(data, opts){
+    // Adopted from SheetJSDev / write.js (https://gist.github.com/SheetJSDev/88a3ca3533adf389d13c)
+    var ws = {};
+    var range = {s: {c:10000000, r:10000000}, e: {c:0, r:0 }};
+    for(var R = 0; R != data.length; ++R) {
+        for(var C = 0; C != data[R].length; ++C) {
+            if(range.s.r > R) range.s.r = R;
+            if(range.s.c > C) range.s.c = C;
+            if(range.e.r < R) range.e.r = R;
+            if(range.e.c < C) range.e.c = C;
+            var cell = {v: data[R][C] };
+            if(cell.v == null) continue;
+            var cell_ref = encode_cell({c:C,r:R});
+
+            if(typeof cell.v === 'number') cell.t = 'n';
+            else if(typeof cell.v === 'boolean') cell.t = 'b';
+            else if(cell.v instanceof Date) {
+                cell.t = 'n'; cell.z = SSF._table[14];
+                cell.v = datenum(cell.v);
+            }
+            else cell.t = 's';
+
+            ws[cell_ref] = cell;
+        }
+    }
+    if(range.s.c < 10000000) ws['!ref'] = encode_range(range);
+    return ws;
+}
+
 function sheet_to_row_object_array(sheet, opts) { return sheet_to_json(sheet, opts != null ? opts : {}); }
 
 function sheet_to_csv(sheet, opts) {
@@ -196,6 +244,8 @@ var utils = {
 	make_csv: sheet_to_csv,
 	make_json: sheet_to_json,
 	make_formulae: sheet_to_formulae,
+    array_to_sheet: array_to_sheet,
+    json_to_sheet: json_to_sheet,
 	sheet_to_csv: sheet_to_csv,
 	sheet_to_json: sheet_to_json,
 	sheet_to_formulae: sheet_to_formulae,
