@@ -146,6 +146,13 @@ function json_to_sheet(json, opts){
     return array_to_sheet(outerArr);
 }
 
+function datenum(v, date1904) {
+    // Adopted from SheetJSDev / write.js (https://gist.github.com/SheetJSDev/88a3ca3533adf389d13c)
+    if(date1904) v+=1462;
+    var epoch = Date.parse(v);
+    return (epoch - new Date(Date.UTC(1899, 11, 30))) / (24 * 60 * 60 * 1000);
+}
+
 function array_to_sheet(data, opts){
     // Adopted from SheetJSDev / write.js (https://gist.github.com/SheetJSDev/88a3ca3533adf389d13c)
     var ws = {};
